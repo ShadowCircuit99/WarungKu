@@ -4,6 +4,8 @@ Aplikasi web prototipe untuk Pembukuan Utang Warung Klontong. Siap untuk diungga
 
 Versi 3.0 menambahkan dark mode, pencarian & filter transaksi, paginasi, detail & edit transaksi, backup/pemulihan data JSON, halaman Pengaturan, badge navigasi, dan tombol aksi cepat (FAB) di mobile.
 
+Aplikasi sudah terpasang: <https://shadowcircuit99.github.io/WarungKu/>
+
 ## Cara Menjalankan
 
 1. Buka `index.html` di browser (Chrome/Edge).
