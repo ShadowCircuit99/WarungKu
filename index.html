@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WarungKu — Pembukuan Utang Warung</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    // Terapkan tema tersimpan sebelum render untuk mencegah kedipan (FOUC)
+    (function () {
+      try {
+        if (localStorage.getItem("warungku_theme") === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-poppins antialiased">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 max-w-xs">
+    <div class="toast-icon">
+      <i class="fas fa-check-circle text-green-400 text-xl"></i>
+    </div>
+    <div class="toast-content">
+      <span id="toast-msg">Berhasil disimpan</span>
+    </div>
+    <button onclick="app.closeToast()" class="text-white hover:text-gray-300 ml-2">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 shadow-xl flex items-center gap-3">
+      <i class="fas fa-spinner fa-spin text-indigo-600 text-xl"></i>
+      <span class="text-gray-700">Memproses...</span>
+    </div>
+  </div>
+
+  <!-- Sidebar (Desktop) -->
+  <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 z-40 hidden lg:flex flex-col border-r border-gray-200">
+    <div class="p-6 border-b border-gray-100 flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-white">
+      <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-3 rounded-xl text-white shadow-lg">
+        <i class="fas fa-store text-xl"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-xl">WarungKu</h1>
+        <p class="text-xs text-gray-500 font-medium">Pembukuan Utang Digital</p>
+      </div>
+    </div>
+    <nav class="p-4 space-y-2">
+      <a href="#" onclick="app.showView('dashboard')" class="nav-item active flex items-center gap-3 px-4 py-3 text-indigo-600 bg-indigo-50 rounded-lg font-medium">
+        <i class="fas fa-chart-pie w-5 text-center"></i> Dashboard
+      </a>
+      <a href="#" onclick="app.showView('pelanggan')" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all font-medium">
+        <i class="fas fa-users w-5 text-center"></i> Pelanggan
+        <span id="nav-badge-pelanggan" class="nav-badge nav-badge-info hidden">0</span>
+      </a>
+      <a href="#" onclick="app.showView('transaksi')" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all font-medium">
+        <i class="fas fa-money-bill-wave w-5 text-center"></i> Transaksi
+        <span id="nav-badge-transaksi" class="nav-badge nav-badge-info hidden">0</span>
+      </a>
+      <a href="#" onclick="app.showView('rekap')" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all font-medium">
+        <i class="fas fa-file-invoice w-5 text-center"></i> Rekap
+        <span id="nav-badge-rekap" class="nav-badge nav-badge-warn hidden">0</span>
+      </a>
+      <a href="#" onclick="app.showView('pengaturan')" class="nav-item flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all font-medium">
+        <i class="fas fa-gear w-5 text-center"></i> Pengaturan
+      </a>
+    </nav>
+    <div class="mt-auto p-6 border-t border-gray-100 bg-gray-50">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="bg-indigo-100 p-2 rounded-lg">
+          <i class="fas fa-info-circle text-indigo-600"></i>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-700">Versi Prototipe</p>
+          <p class="text-xs text-gray-500">v3.0 - November 2026</p>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 leading-relaxed">Data disimpan di browser (localStorage). Cadangkan data secara berkala melalui menu Pengaturan.</p>
+    </div>
+  </aside>
+
+  <!-- Mobile Overlay -->
+  <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden transition-opacity" onclick="app.toggleSidebar()"></div>
+
+  <!-- Main Content -->
+  <main class="flex-1 pl-0 lg:pl-72 pt-6 pb-10 px-4 sm:px-6 lg:px-8 transition-all duration-300" id="main-content">
+    <!-- Mobile Header -->
+    <header class="lg:hidden flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+      <button onclick="app.toggleSidebar()" class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+        <i class="fas fa-bars text-xl"></i>
+      </button>
+      <div class="flex items-center gap-3">
+        <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-2 rounded-lg text-white shadow-md">
+          <i class="fas fa-store text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg">WarungKu</h1>
+          <p class="text-xs text-gray-500">Pembukuan Utang</p>
+        </div>
+      </div>
+      <button onclick="app.toggleTheme()" aria-label="Ubah tema" class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+        <i id="mobile-theme-icon" class="fas fa-moon text-lg"></i>
+      </button>
+    </header>
+
+    <!-- Print Header (hanya tampil saat cetak) -->
+    <div class="print-header">
+      <div class="print-title">WarungKu — Laporan Rekap Utang</div>
+      <div class="print-sub">Pembukuan Utang Warung Klontong</div>
+      <div class="print-meta">
+        Dicetak: <span id="print-date"></span>
+      </div>
+    </div>
+
+    <!-- ========== DASHBOARD VIEW ========== -->
+    <section id="view-dashboard" class="view-section">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
+        <div class="mb-4 sm:mb-0">
+          <h2 class="text-3xl font-bold text-gray-900">Dashboard</h2>
+          <p class="text-gray-500 mt-1">Ringkasan utang warung Anda hari ini</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button onclick="app.showView('transaksi')" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg transition-all transform hover:scale-105">
+            <i class="fas fa-plus"></i> Transaksi Baru
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Total Utang Warung</p>
+            <div class="bg-indigo-100 p-2 rounded-lg">
+              <i class="fas fa-money-bill-wave text-indigo-600"></i>
+            </div>
+          </div>
+          <p id="stat-total-utang" class="text-3xl font-bold text-gray-900 mt-2">Rp 0</p>
+          <p class="text-xs text-green-600 mt-2 flex items-center">
+            <i class="fas fa-arrow-up mr-1"></i> Dibandingkan minggu lalu
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Jumlah Pelanggan Utang</p>
+            <div class="bg-orange-100 p-2 rounded-lg">
+              <i class="fas fa-users text-orange-600"></i>
+            </div>
+          </div>
+          <p id="stat-jumlah-pelanggan" class="text-3xl font-bold text-gray-900 mt-2">0 orang</p>
+          <p class="text-xs text-orange-600 mt-2 flex items-center">
+            <i class="fas fa-user-plus mr-1"></i> Baru bulan ini
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Pelanggan Lunas</p>
+            <div class="bg-green-100 p-2 rounded-lg">
+              <i class="fas fa-check-circle text-green-600"></i>
+            </div>
+          </div>
+          <p id="stat-lunas" class="text-3xl font-bold text-gray-900 mt-2">0 orang</p>
+          <p class="text-xs text-green-600 mt-2 flex items-center">
+            <i class="fas fa-percent mr-1"></i> Tingkat pelunasan
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Total Transaksi</p>
+            <div class="bg-purple-100 p-2 rounded-lg">
+              <i class="fas fa-exchange-alt text-purple-600"></i>
+            </div>
+          </div>
+          <p id="stat-total-transaksi" class="text-3xl font-bold text-gray-900 mt-2">0</p>
+          <p class="text-xs text-purple-600 mt-2 flex items-center">
+            <i class="fas fa-calendar mr-1"></i> Hari ini
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-gradient-to-r from-indigo-50 to-white p-5 rounded-xl border border-indigo-100 hover:shadow-md transition-all">
+          <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">Pelanggan Baru</h3>
+              <p class="text-sm text-gray-600">Tambah pelanggan baru ke sistem</p>
+            </div>
+          </div>
+          <button onclick="app.showView('pelanggan'); app.openPelangganModal()" class="mt-3 w-full bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+            Tambah Sekarang
+          </button>
+        </div>
+        <div class="bg-gradient-to-r from-green-50 to-white p-5 rounded-xl border border-green-100 hover:shadow-md transition-all">
+          <div class="flex items-center gap-3">
+            <div class="bg-green-600 p-2 rounded-lg text-white">
+              <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">Catat Utang</h3>
+              <p class="text-sm text-gray-600">Catat utang baru ke pelanggan</p>
+            </div>
+          </div>
+          <button onclick="app.showView('transaksi'); setTimeout(() => app.openTransaksiModal(), 100)" class="mt-3 w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+            Catat Utang
+          </button>
+        </div>
+        <div class="bg-gradient-to-r from-purple-50 to-white p-5 rounded-xl border border-purple-100 hover:shadow-md transition-all">
+          <div class="flex items-center gap-3">
+            <div class="bg-purple-600 p-2 rounded-lg text-white">
+              <i class="fas fa-file-invoice"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">Lihat Rekap</h3>
+              <p class="text-sm text-gray-600">Lihat rekap lengkap semua transaksi</p>
+            </div>
+          </div>
+          <button onclick="app.showView('rekap')" class="mt-3 w-full bg-purple-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+            Lihat Rekap
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabel Utang Terbaru -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="font-semibold text-gray-800 text-lg">Utang Terbaru</h3>
+              <p class="text-sm text-gray-500 mt-1">10 transaksi terakhir yang memerlukan perhatian</p>
+            </div>
+            <button onclick="app.showView('pelanggan')" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+              Lihat semua pelanggan <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-gray-100 bg-gray-50">
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Pelanggan</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Terakhir Transaksi</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Sisa Utang</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Status</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-table-body" class="divide-y divide-gray-100">
+              <!-- diisi via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="dashboard-empty" class="hidden p-12 text-center">
+          <div class="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+          </div>
+          <p class="text-gray-500 font-medium">Belum ada data pelanggan.</p>
+          <p class="text-sm text-gray-400 mt-1">Mulai dengan menambahkan pelanggan baru</p>
+          <button onclick="app.showView('pelanggan'); app.openPelangganModal()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+            Tambah Pelanggan Pertama
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PELANGGAN VIEW ========== -->
+    <section id="view-pelanggan" class="view-section hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+        <div class="mb-4 sm:mb-0">
+          <h2 class="text-3xl font-bold text-gray-900">Data Pelanggan</h2>
+          <p class="text-gray-500 mt-1">Kelola data pelanggan dan lihat sisa utang masing-masing</p>
+        </div>
+        <button onclick="app.openPelangganModal()" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg transition-all transform hover:scale-105">
+          <i class="fas fa-user-plus"></i> Tambah Pelanggan
+        </button>
+      </div>
+
+      <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input type="text" id="pelanggan-search" placeholder="Cari nama pelanggan, kontak, atau catatan..." class="w-full md:w-80 pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white">
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <h3 class="font-semibold text-gray-800 text-lg">Daftar Pelanggan</h3>
+          <p class="text-sm text-gray-500 mt-1">Kelola semua data pelanggan dan riwayat utang mereka</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-gray-100 bg-gray-50">
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Nama & Info</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Kontak</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Sisa Utang</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Status</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="pelanggan-table-body" class="divide-y divide-gray-100">
+              <!-- diisi via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="pelanggan-empty" class="hidden p-12 text-center">
+          <div class="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-users text-gray-400 text-2xl"></i>
+          </div>
+          <p class="text-gray-500 font-medium">Belum ada data pelanggan.</p>
+          <p class="text-sm text-gray-400 mt-1">Klik tombol "Tambah Pelanggan" untuk memulai</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== TRANSAKSI VIEW ========== -->
+    <section id="view-transaksi" class="view-section hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+        <div class="mb-4 sm:mb-0">
+          <h2 class="text-3xl font-bold text-gray-900">Transaksi</h2>
+          <p class="text-gray-500 mt-1">Catat utang atau pelunasan pelanggan dengan mudah</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button onclick="app.openTransaksiModal()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg transition-all transform hover:scale-105">
+            <i class="fas fa-plus-circle"></i> Transaksi Baru
+          </button>
+          <button onclick="app.exportData()" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-5 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg transition-all transform hover:scale-105">
+            <i class="fas fa-download"></i> Ekspor Data
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        <!-- Form Catat Transaksi -->
+        <div class="xl:col-span-2 space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-6">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-3 rounded-xl text-white shadow-lg">
+                <i class="fas fa-plus-circle text-xl"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-lg text-gray-800">Catat Transaksi Baru</h3>
+                <p class="text-sm text-gray-500">Masukkan detail transaksi baru</p>
+              </div>
+            </div>
+            <form id="transaksi-form" class="space-y-5">
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">Jenis Transaksi</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="relative">
+                    <input type="radio" name="type" value="utang" id="type-utang" class="sr-only peer" checked>
+                    <label for="type-utang" class="flex items-center p-4 border-2 border-orange-200 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors peer-checked:ring-2 peer-checked:ring-orange-400 peer-checked:border-orange-400">
+                      <div class="bg-orange-500 p-2 rounded-lg text-white mr-3">
+                        <i class="fas fa-money-bill-wave"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium text-gray-800">Utang</div>
+                        <div class="text-xs text-gray-600">Tambah hutang baru</div>
+                      </div>
+                    </label>
+                  </div>
+                  <div class="relative">
+                    <input type="radio" name="type" value="pelunasan" id="type-pelunasan" class="sr-only peer">
+                    <label for="type-pelunasan" class="flex items-center p-4 border-2 border-green-200 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors peer-checked:ring-2 peer-checked:ring-green-400 peer-checked:border-green-400">
+                      <div class="bg-green-500 p-2 rounded-lg text-white mr-3">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium text-gray-800">Pelunasan</div>
+                        <div class="text-xs text-gray-600">Catat pembayaran</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="transaksi-pelanggan" class="block text-sm font-semibold text-gray-700">Pilih Pelanggan</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <i class="fas fa-users text-gray-400"></i>
+                    </div>
+                    <select id="transaksi-pelanggan" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white">
+                      <option value="">-- Pilih pelanggan --</option>
+                    </select>
+                  </div>
+                  <button type="button" onclick="app.openPelangganModalForTransaksi('transaksi')" class="px-3 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg border border-indigo-200 transition-colors flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap" title=" tambah pelanggan baru">
+                    <i class="fas fa-plus"></i><span class="text-xs sm:text-sm font-medium">Baru</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="transaksi-nominal" class="block text-sm font-semibold text-gray-700">Nominal (Rp)</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-coins text-gray-400"></i>
+                  </div>
+                  <input type="text" inputmode="numeric" id="transaksi-nominal" placeholder="Contoh: 50.000" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" oninput="app.formatNominalInput(this)">
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="transaksi-tanggal" class="block text-sm font-semibold text-gray-700">Tanggal Transaksi</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-calendar text-gray-400"></i>
+                  </div>
+                  <input type="date" id="transaksi-tanggal" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="transaksi-keterangan" class="block text-sm font-semibold text-gray-700">Keterangan</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-sticky-note text-gray-400"></i>
+                  </div>
+                  <input type="text" id="transaksi-keterangan" placeholder="Contoh: Beras, minyak, telur" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+                </div>
+              </div>
+
+              <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-4 rounded-xl font-semibold text-base shadow-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> Simpan Transaksi
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Daftar Transaksi Terbaru -->
+        <div class="xl:col-span-3">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex justify-between items-start mb-4 gap-3 flex-wrap">
+              <div>
+                <h3 class="font-bold text-lg text-gray-800">Riwayat Transaksi</h3>
+                <p class="text-sm text-gray-500 mt-1">Lihat dan kelola semua transaksi yang telah dicatat</p>
+              </div>
+              <div class="bg-indigo-100 px-3 py-1 rounded-full">
+                <span id="transaksi-count" class="text-sm font-semibold text-indigo-700">0 transaksi</span>
+              </div>
+            </div>
+
+            <!-- Filter & Pencarian Transaksi -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 no-print">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" id="transaksi-search" placeholder="Cari pelanggan atau keterangan..." class="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <select id="transaksi-filter-pelanggan" class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white">
+                  <option value="">Semua Pelanggan</option>
+                </select>
+                <select id="transaksi-filter-jenis" class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white">
+                  <option value="">Semua Jenis</option>
+                  <option value="utang">Utang</option>
+                  <option value="pelunasan">Pelunasan</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="border-b border-gray-100 bg-gray-50">
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Tanggal</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Pelanggan</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Jenis</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Nominal</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Keterangan</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="transaksi-table-body" class="divide-y divide-gray-100">
+                  <!-- diisi via JS -->
+                </tbody>
+              </table>
+            </div>
+            <div id="transaksi-empty" class="hidden p-12 text-center">
+              <div class="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exchange-alt text-gray-400 text-2xl"></i>
+              </div>
+              <p class="text-gray-500 font-medium">Belum ada transaksi.</p>
+              <p class="text-sm text-gray-400 mt-1">Mulai dengan mencatat transaksi pertama</p>
+              <button onclick="app.openTransaksiModal()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                Catat Transaksi Pertama
+              </button>
+            </div>
+
+            <!-- Pagination -->
+            <div id="transaksi-pagination" class="hidden flex items-center justify-between flex-wrap gap-3 mt-4 pt-4 border-t border-gray-100 no-print">
+              <p class="text-xs text-gray-500" id="transaksi-page-info"></p>
+              <div class="flex items-center gap-1" id="transaksi-page-buttons"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== REKAP VIEW ========== -->
+    <section id="view-rekap" class="view-section hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+        <div class="mb-4 sm:mb-0">
+          <h2 class="text-3xl font-bold text-gray-900">Rekap Utang</h2>
+          <p class="text-gray-500 mt-1">Lihat rekapitulasi utang per pelanggan dan total warung</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg transition-all transform hover:scale-105">
+            <i class="fas fa-print"></i> Cetak / PDF
+          </button>
+          <button onclick="app.exportData()" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-5 py-3 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg transition-all transform hover:scale-105">
+            <i class="fas fa-download"></i> Ekspor Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- Total Ringkasan -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Total Utang Keseluruhan</p>
+            <div class="bg-red-100 p-2 rounded-lg">
+              <i class="fas fa-money-bill-wave text-red-600"></i>
+            </div>
+          </div>
+          <p id="rekap-total" class="text-3xl font-bold text-red-600 mt-2">Rp 0</p>
+          <p class="text-xs text-red-600 mt-2 flex items-center">
+            <i class="fas fa-chart-line mr-1"></i> Dibandingkan bulan lalu
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Total Pelanggan</p>
+            <div class="bg-blue-100 p-2 rounded-lg">
+              <i class="fas fa-users text-blue-600"></i>
+            </div>
+          </div>
+          <p id="rekap-jumlah-pelanggan" class="text-3xl font-bold text-gray-900 mt-2">0 orang</p>
+          <p class="text-xs text-blue-600 mt-2 flex items-center">
+            <i class="fas fa-user-plus mr-1"></i> Baru hari ini
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Belum Lunas</p>
+            <div class="bg-orange-100 p-2 rounded-lg">
+              <i class="fas fa-clock text-orange-600"></i>
+            </div>
+          </div>
+          <p id="rekap-belum-lunas" class="text-3xl font-bold text-orange-600 mt-2">0 orang</p>
+          <p class="text-xs text-orange-600 mt-2 flex items-center">
+            <i class="fas fa-exclamation-circle mr-1"></i> Perlu tindakan
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-500 font-medium uppercase tracking-wider">Total Transaksi</p>
+            <div class="bg-purple-100 p-2 rounded-lg">
+              <i class="fas fa-exchange-alt text-purple-600"></i>
+            </div>
+          </div>
+          <p id="rekap-total-transaksi" class="text-3xl font-bold text-gray-900 mt-2">0</p>
+          <p class="text-xs text-purple-600 mt-2 flex items-center">
+            <i class="fas fa-calendar-alt mr-1"></i> Bulan ini
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <h3 class="font-bold text-lg text-gray-800">Rekap per Pelanggan</h3>
+          <p class="text-sm text-gray-500 mt-1">Analisis lengkap riwayat utang setiap pelanggan</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-gray-100 bg-gray-50">
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">No</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Pelanggan</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Utang Dicatat</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Dibayar</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Sisa Utang</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Status</th>
+                <th class="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="rekap-table-body" class="divide-y divide-gray-100">
+              <!-- diisi via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="rekap-empty" class="hidden p-12 text-center">
+          <div class="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-file-invoice text-gray-400 text-2xl"></i>
+          </div>
+          <p class="text-gray-500 font-medium">Belum ada data rekap.</p>
+          <p class="text-sm text-gray-400 mt-1">Mulai dengan mencatat beberapa transaksi</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PENGATURAN VIEW ========== -->
+    <section id="view-pengaturan" class="view-section hidden">
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900">Pengaturan</h2>
+        <p class="text-gray-500 mt-1">Kelola tampilan, cadangan data, dan informasi aplikasi</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Tampilan -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+            <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2"><i class="fas fa-palette text-indigo-600"></i> Tampilan</h3>
+            <p class="text-sm text-gray-500 mt-1">Sesuaikan tema aplikasi</p>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="flex items-center gap-3">
+                <div class="bg-gray-800 p-2 rounded-lg text-white"><i class="fas fa-moon"></i></div>
+                <div>
+                  <p class="font-medium text-gray-800">Mode Gelap</p>
+                  <p class="text-xs text-gray-500">Nyaman digunakan malam hari</p>
+                </div>
+              </div>
+              <button id="theme-toggle" role="switch" aria-checked="false" onclick="app.toggleTheme()" class="relative w-14 h-7 rounded-full bg-gray-300 transition-colors shrink-0">
+                <span id="theme-toggle-knob" class="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform flex items-center justify-center text-xs">
+                  <i id="theme-toggle-icon" class="fas fa-sun text-amber-500"></i>
+                </span>
+              </button>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="flex items-center gap-3">
+                <div class="bg-indigo-100 p-2 rounded-lg text-indigo-600"><i class="fas fa-list-ol"></i></div>
+                <div>
+                  <p class="font-medium text-gray-800">Transaksi per Halaman</p>
+                  <p class="text-xs text-gray-500">Jumlah baris pada daftar transaksi</p>
+                </div>
+              </div>
+              <select id="page-size-select" class="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cadangan Data -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+            <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2"><i class="fas fa-database text-green-600"></i> Cadangan &amp; Pemulihan Data</h3>
+            <p class="text-sm text-gray-500 mt-1">Data tersimpan di browser ini saja</p>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="flex flex-col gap-3">
+              <button onclick="app.backupJSON()" class="w-full flex items-center gap-3 p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-100 transition-colors text-left">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white"><i class="fas fa-file-export"></i></div>
+                <div>
+                  <p class="font-medium text-gray-800">Unduh Cadangan (.json)</p>
+                  <p class="text-xs text-gray-500">Simpan semua data ke satu berkas</p>
+                </div>
+              </button>
+              <label class="w-full flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-100 transition-colors text-left cursor-pointer">
+                <div class="bg-green-600 p-2 rounded-lg text-white"><i class="fas fa-file-import"></i></div>
+                <div>
+                  <p class="font-medium text-gray-800">Pulihkan dari Cadangan</p>
+                  <p class="text-xs text-gray-500">Muat kembali data dari berkas .json</p>
+                </div>
+                <input type="file" id="restore-input" accept="application/json,.json" class="hidden" onchange="app.restoreJSON(this)">
+              </label>
+              <button onclick="app.exportData()" class="w-full flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition-colors text-left">
+                <div class="bg-blue-600 p-2 rounded-lg text-white"><i class="fas fa-file-csv"></i></div>
+                <div>
+                  <p class="font-medium text-gray-800">Ekspor Rekap (.csv)</p>
+                  <p class="text-xs text-gray-500">Buka di Excel / Google Sheets</p>
+                </div>
+              </button>
+            </div>
+            <div class="pt-4 border-t border-gray-100">
+              <div class="flex items-start gap-3 mb-3">
+                <div class="bg-red-100 p-2 rounded-lg text-red-600"><i class="fas fa-triangle-exclamation"></i></div>
+                <div>
+                  <p class="font-medium text-gray-800">Zona Berbahaya</p>
+                  <p class="text-xs text-gray-500" id="pengaturan-data-info">Menghapus semua data pelanggan dan transaksi.</p>
+                </div>
+              </div>
+              <button onclick="app.confirmReset()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-3 rounded-lg font-medium transition-colors">
+                <i class="fas fa-trash mr-2"></i>Hapus Semua Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tentang Aplikasi -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden lg:col-span-2">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+            <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2"><i class="fas fa-circle-info text-purple-600"></i> Tentang Aplikasi</h3>
+          </div>
+          <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <div class="flex items-center gap-3 mb-4">
+                <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-3 rounded-xl text-white shadow-lg">
+                  <i class="fas fa-store text-xl"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-lg text-gray-800">WarungKu</h4>
+                  <p class="text-xs text-gray-500">Pembukuan Utang Warung Klontong</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-600 leading-relaxed">Aplikasi prototipe pembukuan utang yang berjalan sepenuhnya di browser (client-side). Dirancang untuk memudahkan pemilik warung mencatat utang, pelunasan, dan rekap pelanggan tanpa server backend.</p>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between py-2 border-b border-gray-100"><span class="text-gray-500">Versi</span><span class="font-medium text-gray-800">v3.0</span></div>
+              <div class="flex justify-between py-2 border-b border-gray-100"><span class="text-gray-500">Teknologi</span><span class="font-medium text-gray-800">HTML, Tailwind CSS, JavaScript</span></div>
+              <div class="flex justify-between py-2 border-b border-gray-100"><span class="text-gray-500">Penyimpanan</span><span class="font-medium text-gray-800">localStorage Browser</span></div>
+              <div class="flex justify-between py-2"><span class="text-gray-500">Deployment</span><span class="font-medium text-gray-800">GitHub Pages (Statis)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== MODAL: Tambah Pelanggan ========== -->
+    <div id="modal-pelanggan" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="app.closePelangganModal()"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 opacity-0 transition-all duration-300" id="modal-pelanggan-content">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-indigo-600 to-purple-600 p-3 rounded-xl text-white shadow-lg">
+                  <i class="fas fa-user-plus text-lg"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-gray-800" id="modal-pelanggan-title">Tambah Pelanggan</h3>
+                  <p class="text-sm text-gray-500">Masukkan data pelanggan baru</p>
+                </div>
+              </div>
+              <button onclick="app.closePelangganModal()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+          </div>
+          <form id="pelanggan-form" class="p-6 space-y-5">
+            <input type="hidden" id="pelanggan-id">
+            <div class="space-y-2">
+              <label for="pelanggan-nama" class="block text-sm font-semibold text-gray-700">Nama Lengkap <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-user text-gray-400"></i>
+                </div>
+                <input type="text" id="pelanggan-nama" placeholder="Contoh: Budi Santoso" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="pelanggan-kontak" class="block text-sm font-semibold text-gray-700">Kontak / No. HP</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-phone text-gray-400"></i>
+                </div>
+                <input type="text" id="pelanggan-kontak" placeholder="Contoh: 08123456789" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="pelanggan-catatan" class="block text-sm font-semibold text-gray-700">Catatan</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-sticky-note text-gray-400"></i>
+                </div>
+                <input type="text" id="pelanggan-catatan" placeholder="Contoh: Tetangga sebelah, langganan tetap" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+              </div>
+            </div>
+            <div class="flex gap-3 pt-4 border-t border-gray-100">
+              <button type="button" onclick="app.closePelangganModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-lg font-medium transition-colors">
+                Batal
+              </button>
+              <button type="submit" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105">
+                Simpan Pelanggan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: Tambah Transaksi ========== -->
+    <div id="modal-transaksi" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="app.closeTransaksiModal()"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl transform scale-95 opacity-0 transition-all duration-300" id="modal-transaksi-content">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-green-600 to-emerald-600 p-3 rounded-xl text-white shadow-lg">
+                  <i class="fas fa-plus-circle text-lg"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-gray-800" id="modal-transaksi-title">Catat Transaksi</h3>
+                  <p class="text-sm text-gray-500" id="modal-transaksi-subtitle">Masukkan detail transaksi baru</p>
+                </div>
+              </div>
+              <button onclick="app.closeTransaksiModal()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+          </div>
+          <form id="transaksi-modal-form" class="p-6 space-y-5">
+            <input type="hidden" id="modal-transaksi-id">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label for="modal-transaksi-type" class="block text-sm font-semibold text-gray-700">Jenis Transaksi</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-exchange-alt text-gray-400"></i>
+                  </div>
+                  <select id="modal-transaksi-type" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white">
+                    <option value="utang">Utang (Tambah hutang)</option>
+                    <option value="pelunasan">Pelunasan (Bayar utang)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label for="modal-transaksi-pelanggan" class="block text-sm font-semibold text-gray-700">Pilih Pelanggan</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <i class="fas fa-users text-gray-400"></i>
+                    </div>
+                    <select id="modal-transaksi-pelanggan" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white" required>
+                      <option value="">-- Pilih pelanggan --</option>
+                    </select>
+                  </div>
+                  <button type="button" onclick="app.openPelangganModalForTransaksi('modal')" class="px-3 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg border border-indigo-200 transition-colors flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap" title=" tambah pelanggan baru">
+                    <i class="fas fa-plus"></i><span class="text-xs sm:text-sm font-medium">Baru</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label for="modal-transaksi-nominal" class="block text-sm font-semibold text-gray-700">Nominal (Rp)</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-coins text-gray-400"></i>
+                  </div>
+                  <input type="text" inputmode="numeric" id="modal-transaksi-nominal" placeholder="Contoh: 50.000" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" oninput="app.formatNominalInput(this)" required>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label for="modal-transaksi-tanggal" class="block text-sm font-semibold text-gray-700">Tanggal Transaksi</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-calendar text-gray-400"></i>
+                  </div>
+                  <input type="date" id="modal-transaksi-tanggal" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label for="modal-transaksi-keterangan" class="block text-sm font-semibold text-gray-700">Keterangan</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-sticky-note text-gray-400"></i>
+                </div>
+                <input type="text" id="modal-transaksi-keterangan" placeholder="Contoh: Beras, minyak, telur, lain-lain" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+              </div>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-gray-100">
+              <button type="button" onclick="app.closeTransaksiModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-lg font-medium transition-colors">
+                Batal
+              </button>
+              <button type="submit" class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105">
+                Simpan Transaksi
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: Detail Pelanggan (Riwayat) ========== -->
+    <div id="modal-detail" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="app.closeDetailModal()"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl transform scale-95 opacity-0 transition-all duration-300" id="modal-detail-content">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-purple-600 to-pink-600 p-3 rounded-xl text-white shadow-lg">
+                  <i class="fas fa-history text-lg"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-gray-800" id="detail-title">Riwayat Pelanggan</h3>
+                  <p class="text-sm text-gray-500">Detail lengkap riwayat transaksi</p>
+                </div>
+              </div>
+              <button onclick="app.closeDetailModal()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
+              <div class="flex-1">
+                <p id="detail-nama" class="text-2xl font-bold text-gray-800 mb-2"></p>
+                <p id="detail-kontak" class="text-sm text-gray-600 flex items-center gap-2">
+                  <i class="fas fa-phone text-gray-400"></i> <span></span>
+                </p>
+              </div>
+              <div class="text-right bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 uppercase tracking-wider">Sisa Utang</p>
+                <p id="detail-sisa" class="text-3xl font-bold text-red-600">Rp 0</p>
+                <p class="text-xs text-gray-500 mt-1">Total transaksi: <span id="detail-transaksi-count">0</span></p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-xs font-semibold text-gray-400 uppercase mb-1">Riwayat Transaksi</p>
+                <div class="bg-purple-100 px-3 py-1 rounded-full">
+                  <span id="detail-count" class="text-xs font-semibold text-purple-700">0 transaksi</span>
+                </div>
+              </div>
+              <div id="detail-riwayat" class="space-y-3">
+                <!-- diisi via JS -->
+              </div>
+              <div id="detail-empty" class="hidden text-center py-8 bg-gray-50 rounded-lg">
+                <div class="bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                  <i class="fas fa-exchange-alt text-gray-400"></i>
+                </div>
+                <p class="text-gray-500 font-medium">Belum ada transaksi.</p>
+              </div>
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100">
+              <button onclick="app.closeDetailModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-lg font-medium transition-colors">
+                Tutup
+              </button>
+              <button id="detail-edit-btn" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-lg font-medium shadow-lg transition-all transform hover:scale-105">
+                <i class="fas fa-pen mr-2"></i> Edit Pelanggan
+              </button>
+              <button onclick="app.exportCustomerData(document.getElementById('detail-nama').textContent)" class="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-3 rounded-lg font-medium shadow-lg transition-all transform hover:scale-105">
+                <i class="fas fa-download mr-2"></i> Export Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: Detail Transaksi ========== -->
+    <div id="modal-transaksi-detail" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="app.closeTransaksiDetail()"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform scale-95 opacity-0 transition-all duration-300" id="modal-transaksi-detail-content">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-blue-600 to-cyan-600 p-3 rounded-xl text-white shadow-lg">
+                  <i class="fas fa-receipt text-lg"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-gray-800">Detail Transaksi</h3>
+                  <p class="text-sm text-gray-500">Informasi lengkap transaksi</p>
+                </div>
+              </div>
+              <button onclick="app.closeTransaksiDetail()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+          </div>
+          <div class="p-6" id="transaksi-detail-body">
+            <!-- diisi via JS -->
+          </div>
+          <div class="p-6 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-100">
+            <button onclick="app.closeTransaksiDetail()" class="flex-1 sm:flex-none px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors">Tutup</button>
+            <button id="transaksi-detail-edit" class="flex-1 sm:flex-none px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105">
+              <i class="fas fa-pen mr-2"></i>Edit
+            </button>
+            <button id="transaksi-detail-delete" class="flex-1 sm:flex-none px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105">
+              <i class="fas fa-trash mr-2"></i>Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CONFIRM DELETE ========== -->
+    <div id="modal-confirm" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="app.closeConfirmModal()"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-red-50 to-white">
+            <div class="flex items-center gap-3">
+              <div class="bg-red-100 p-3 rounded-xl">
+                <i class="fas fa-exclamation-triangle text-red-600 text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-lg text-gray-800">Konfirmasi Hapus</h3>
+                <p class="text-sm text-gray-500">Tindakan ini tidak dapat dibatalkan</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-6">
+            <p class="text-gray-600" id="confirm-message">Yakin ingin menghapus data ini?</p>
+          </div>
+          <div class="p-6 bg-gray-50 flex justify-end gap-3">
+            <button onclick="app.closeConfirmModal()" class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors">
+              Batal
+            </button>
+            <button onclick="app.executeConfirm()" class="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105">
+              <i class="fas fa-trash mr-2"></i>Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========== BOTTOM NAVIGATION (MOBILE) ========== -->
+  <nav id="bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 shadow-2xl pb-[env(safe-area-inset-bottom)]">
+    <div class="grid grid-cols-5">
+      <button onclick="app.showView('dashboard')" class="bottom-nav-item active flex flex-col items-center py-3 text-indigo-600">
+        <i class="fas fa-chart-pie text-lg"></i>
+        <span class="text-[10px] font-medium mt-1">Dashboard</span>
+      </button>
+      <button onclick="app.showView('pelanggan')" class="bottom-nav-item flex flex-col items-center py-3 text-gray-500 hover:text-gray-700">
+        <i class="fas fa-users text-lg"></i>
+        <span class="text-[10px] font-medium mt-1">Pelanggan</span>
+      </button>
+      <button onclick="app.showView('transaksi')" class="bottom-nav-item flex flex-col items-center py-3 text-gray-500 hover:text-gray-700">
+        <i class="fas fa-money-bill-wave text-lg"></i>
+        <span class="text-[10px] font-medium mt-1">Transaksi</span>
+      </button>
+      <button onclick="app.showView('rekap')" class="bottom-nav-item flex flex-col items-center py-3 text-gray-500 hover:text-gray-700">
+        <i class="fas fa-file-invoice text-lg"></i>
+        <span class="text-[10px] font-medium mt-1">Rekap</span>
+      </button>
+      <button onclick="app.showView('pengaturan')" class="bottom-nav-item flex flex-col items-center py-3 text-gray-500 hover:text-gray-700">
+        <i class="fas fa-gear text-lg"></i>
+        <span class="text-[10px] font-medium mt-1">Atur</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Floating Action Button (hanya mobile) -->
+  <button id="mobile-fab" onclick="app.fabAction()" aria-label="Tambah transaksi" class="lg:hidden fixed right-4 z-30 bg-gradient-to-r from-indigo-600 to-purple-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-95">
+    <i class="fas fa-plus text-xl"></i>
+  </button>
+
+  <!-- Spacer untuk bottom nav mobile agar konten tidak tertutup -->
+  <div class="lg:hidden h-20"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

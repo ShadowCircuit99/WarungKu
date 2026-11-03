@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wireframe / Mockup — WarungKu v3.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "Poppins", system-ui, sans-serif; }
+    .wireframe-box { border: 2px solid #94a3b8; background: #f8fafc; border-radius: 12px; }
+    .wireframe-box::before { content: ""; display: block; height: 8px; background: #cbd5e1; border-top-left-radius: 10px; border-top-right-radius: 10px; margin-bottom: 12px; }
+    .wireframe-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px; }
+    .block-gray { background: #e2e8f0; border-radius: 6px; height: 36px; margin-bottom: 10px; }
+    .block-gray-sm { background: #e2e8f0; border-radius: 4px; height: 24px; margin-bottom: 8px; }
+    .btn-wire { background: #cbd5e1; border: 1px solid #94a3b8; border-radius: 6px; height: 40px; font-weight: 600; color: #334155; cursor: pointer; }
+    .btn-wire:hover { background: #94a3b8; color: #fff; }
+    .input-wire { border: 1px solid #94a3b8; border-radius: 6px; height: 40px; padding: 0 12px; width: 100%; background: #fff; }
+    .table-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; padding: 10px; border-bottom: 1px solid #cbd5e1; background: #fff; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    .badge-utang { background: #fef3c7; color: #92400e; }
+    .badge-lunas { background: #d1fae5; color: #065f46; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-6 md:p-10">
+
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="mb-10">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="bg-indigo-600 p-2 rounded-lg text-white"><i class="fas fa-store"></i></div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">WarungKu v3.0</h1>
+          <p class="text-sm text-gray-500">Wireframe / Mockup — Pembukuan Utang Warung Klontong</p>
+        </div>
+      </div>
+      <p class="text-sm text-gray-600">Rancangan antarmuka aplikasi pembukuan utang digital. Digunakan sebagai lampiran laporan tugas Manajemen Proyek Informatika.</p>
+    </div>
+
+    <!-- Desktop + Mobile side by side -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <!-- Desktop View -->
+      <div class="space-y-8">
+        <h2 class="text-lg font-semibold text-gray-800 border-b-2 border-indigo-600 pb-2">Tampilan Desktop</h2>
+
+        <!-- Dashboard -->
+        <div class="wireframe-box p-6 shadow-sm">
+          <div class="wireframe-label">Dashboard — Ringkasan Utang Warung</div>
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <div class="text-xs text-gray-500">Total Utang Warung</div>
+              <div class="text-lg font-bold">Rp 175.000</div>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <div class="text-xs text-gray-500">Jumlah Pelanggan Utang</div>
+              <div class="text-lg font-bold">3 orang</div>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <div class="text-xs text-gray-500">Pelanggan Lunas</div>
+              <div class="text-lg font-bold">1 orang</div>
+            </div>
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <div class="text-xs text-gray-500">Total Transaksi</div>
+              <div class="text-lg font-bold">7</div>
+            </div>
+          </div>
+          <div class="block-gray" style="height: 200px;"></div>
+          <div class="mt-4 flex gap-3">
+            <button class="btn-wire flex-1">+ Pelanggan Baru</button>
+            <button class="btn-wire bg-indigo-600 text-white flex-1">+ Catat Transaksi</button>
+          </div>
+        </div>
+
+        <!-- Pelanggan -->
+        <div class="wireframe-box p-6 shadow-sm">
+          <div class="wireframe-label">Data Pelanggan &amp; Sisa Utang</div>
+          <div class="mb-4"><input type="text" class="input-wire" placeholder="Cari nama pelanggan..."></div>
+          <div class="table-row font-bold text-gray-500 text-xs bg-gray-50">
+            <div>Nama</div><div class="text-right">Kontak</div><div class="text-right">Sisa Utang</div><div class="text-right">Aksi</div>
+          </div>
+          <div class="table-row"><div class="font-medium">Bu Siti</div><div class="text-right text-gray-600">0812xxxx</div><div class="text-right font-medium text-red-600">Rp 45.000</div><div class="text-right"><button class="btn-wire" style="height:auto;padding:4px 10px;font-size:0.75rem;">Detail</button></div></div>
+          <div class="table-row"><div class="font-medium">Pak Budi</div><div class="text-right text-gray-600">0813xxxx</div><div class="text-right font-medium text-green-600">Rp 0</div><div class="text-right"><button class="btn-wire" style="height:auto;padding:4px 10px;font-size:0.75rem;">Detail</button></div></div>
+          <div class="table-row"><div class="font-medium">Mbak Rina</div><div class="text-right text-gray-600">-</div><div class="text-right font-medium text-red-600">Rp 10.000</div><div class="text-right"><button class="btn-wire" style="height:auto;padding:4px 10px;font-size:0.75rem;">Detail</button></div></div>
+        </div>
+
+        <!-- Transaksi v3.0 (pencarian, filter, paginasi) -->
+        <div class="wireframe-box p-6 shadow-sm">
+          <div class="wireframe-label">Riwayat Transaksi — Pencarian, Filter &amp; Paginasi (v3.0)</div>
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <input type="text" class="input-wire" placeholder="Cari...">
+            <select class="input-wire"><option>Semua Pelanggan</option></select>
+            <select class="input-wire"><option>Semua Jenis</option></select>
+          </div>
+          <div class="block-gray-sm" style="height: 16px; width: 40%;"></div>
+          <div class="block-gray-sm" style="height: 16px;"></div>
+          <div class="block-gray-sm" style="height: 16px;"></div>
+          <div class="mt-4 flex justify-between items-center">
+            <span class="text-xs text-gray-500">Menampilkan 1–3 dari 7 transaksi</span>
+            <div class="flex gap-1">
+              <button class="btn-wire" style="height:auto;padding:4px 10px;">&lt;</button>
+              <button class="btn-wire bg-indigo-600 text-white" style="height:auto;padding:4px 10px;">1</button>
+              <button class="btn-wire" style="height:auto;padding:4px 10px;">2</button>
+              <button class="btn-wire" style="height:auto;padding:4px 10px;">&gt;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile View -->
+      <div class="space-y-8">
+        <h2 class="text-lg font-semibold text-gray-800 border-b-2 border-indigo-600 pb-2">Tampilan Mobile (Responsif)</h2>
+
+        <div class="max-w-xs mx-auto">
+          <!-- Phone frame -->
+          <div class="bg-gray-900 rounded-2xl p-2 shadow-2xl border-4 border-gray-900">
+            <div class="bg-white rounded-xl overflow-hidden">
+              <!-- Header phone -->
+              <div class="bg-white px-4 py-4 border-b border-gray-200 flex justify-between items-center">
+                <i class="fas fa-bars text-gray-700"></i>
+                <div class="flex items-center gap-2">
+                  <div class="bg-indigo-600 w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs"><i class="fas fa-store"></i></div>
+                  <div class="leading-tight">
+                    <div class="font-bold text-sm">WarungKu</div>
+                    <div class="text-[10px] text-gray-500">Pembukuan Utang</div>
+                  </div>
+                </div>
+                <i class="fas fa-moon text-gray-500"></i>
+              </div>
+
+              <!-- Content -->
+              <div class="p-4">
+                <div class="text-lg font-bold">Dashboard</div>
+                <div class="text-xs text-gray-500 mb-3">Ringkasan utang warung Anda hari ini</div>
+                <button class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium mb-4 text-sm">+ Transaksi Baru</button>
+
+                <div class="bg-white border border-gray-200 p-4 rounded-lg mb-3">
+                  <div class="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Total Utang</div>
+                  <div class="text-xl font-bold">Rp 175.000</div>
+                </div>
+                <div class="bg-white border border-gray-200 p-4 rounded-lg mb-3">
+                  <div class="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Pelanggan Utang</div>
+                  <div class="text-xl font-bold">3 orang</div>
+                </div>
+
+                <!-- bottom nav -->
+                <div class="border-t border-gray-200 -mx-4 px-2 pt-2 grid grid-cols-5 text-center text-[9px]">
+                  <div class="text-indigo-600 font-medium"><i class="fas fa-chart-pie block mb-1"></i>Dashboard</div>
+                  <div class="text-gray-400"><i class="fas fa-users block mb-1"></i>Pelanggan</div>
+                  <div class="text-gray-400"><i class="fas fa-money-bill-wave block mb-1"></i>Transaksi</div>
+                  <div class="text-gray-400"><i class="fas fa-file-invoice block mb-1"></i>Rekap</div>
+                  <div class="text-gray-400"><i class="fas fa-gear block mb-1"></i>Atur</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dark mode preview -->
+          <div class="mt-6 bg-slate-900 rounded-2xl p-4 shadow-xl text-slate-100">
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Pratinjau Dark Mode (v3.0)</div>
+            <div class="flex items-center justify-between bg-slate-800 rounded-lg p-3 mb-2">
+              <span class="text-sm">Mode Gelap</span>
+              <span class="w-10 h-6 rounded-full bg-indigo-600 relative inline-block"><span class="absolute top-1 right-1 w-4 h-4 bg-white rounded-full"></span></span>
+            </div>
+            <div class="flex items-center justify-between bg-slate-800 rounded-lg p-3">
+              <span class="text-sm">Transaksi per Halaman</span>
+              <span class="text-sm text-slate-300">10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Catatan -->
+    <div class="mt-10 bg-gray-50 p-6 rounded-xl border border-gray-200">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">Catatan Mockup</h3>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-2">
+        <li>Mockup ini adalah <strong>rancangan antarmuka</strong> sebelum diimplementasi ke <code>index.html</code>.</li>
+        <li>Versi v3.0 menambahkan <strong>dark mode</strong>, <strong>pencarian/filter/paginasi transaksi</strong>, <strong>halaman Pengaturan</strong>, <strong>badge navigasi</strong>, dan <strong>FAB</strong> di mobile.</li>
+        <li>Tampilan akhir sudah responsif dan bisa diakses melalui browser HP dan desktop.</li>
+        <li>Semua data pelanggan dan transaksi disimpan di <strong>localStorage</strong> browser (tidak perlu backend).</li>
+        <li>Mockup ini dapat dimasukkan ke <strong>Lampiran</strong> laporan akhir.</li>
+      </ul>
+    </div>
+
+  </div>
+
+</body>
+</html>
